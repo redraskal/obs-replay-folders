@@ -1,8 +1,10 @@
 # obs-replay-folders
+
 Saves replay buffer files to game-specific folders (like ShadowPlay).
 
-## About
+## Important:
 
-Replay Buffer Folders moves replay buffer files to a sub-folder upon creation. The sub-folder is determined by the current window title in the Game Capture source. Tested on Windows.
+1. The script requires `detect_game.exe` to be added to PATH.
+2. To update the replay folder, restart the Replay Buffer.
 
-### The script requires the Game Capture source to be called "Game Capture".
+There is no way to run an executable in Lua without breaking fullscreen application focus. So, the current running game will not automatically update.
