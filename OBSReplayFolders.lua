@@ -1,22 +1,25 @@
 obs = obslua
 
 function script_description()
-	return [[Saves replays to sub-folders using the Game Capture executable name.
+	return [[Saves replays to sub-folders using the current fullscreen video game executable name.
 	
 Author: redraskal]]
 end
 
 function script_load()
+	ffi = require("ffi")
+	ffi.cdef[[
+		int get_running_fullscreen_game_path(char* buffer, int bufferSize)
+	]]
+	detect_game = ffi.load(script_path() .. "detect_game.dll")
+	print(get_running_game_title())
 	obs.obs_frontend_add_event_callback(obs_frontend_callback)
-	folder = get_running_game_title()
 end
 
 function obs_frontend_callback(event)
-	if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED then
-		folder = get_running_game_title()
-	end
 	if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED then
 		local path = get_replay_buffer_output()
+		local folder = get_running_game_title()
 		if path ~= nil and folder ~= nil then
 			print("Moving " .. path .. " to " .. folder)
 			move(path, folder)
@@ -36,9 +39,12 @@ function get_replay_buffer_output()
 end
 
 function get_running_game_title()
-	local handle = assert(io.popen("detect_game"))
-	local result = handle:read("*all")
-	handle:close()
+	local path = ffi.new("char[?]", 260)
+	local result = detect_game.get_running_fullscreen_game_path(path, 260)
+	if result ~= 0 then
+		return nil
+	end
+	result = ffi.string(path)
 	local len = #result
 	if len == 0 then
 		return nil
@@ -55,7 +61,6 @@ function get_running_game_title()
 		end
 		i = i + 1
 	end
-	print("Current running game: " .. title)
 	return title
 end
 
