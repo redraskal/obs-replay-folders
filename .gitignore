@@ -1,5 +1,5 @@
-*.c
 *.cmd
+*.zip
 
 # Compiled Lua sources
 luac.out

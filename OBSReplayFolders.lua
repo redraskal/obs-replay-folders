@@ -49,19 +49,16 @@ function get_running_game_title()
 	if len == 0 then
 		return nil
 	end
-	local title = ""
-	local i = 1
 	local max = len - 4
-	while i <= max do
+	local i = max
+	while i > 1 do
 		local char = result:sub(i, i)
 		if char == "\\" then
-			title = ""
-		else
-			title = title .. char
+			break
 		end
-		i = i + 1
+		i = i - 1
 	end
-	return title
+	return result:sub(i + 1, max)
 end
 
 function move(path, folder)
