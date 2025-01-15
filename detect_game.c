@@ -24,6 +24,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 #define MAX_TITLE_LENGTH 256
 static const char prefix[] = "C:\\Windows\\";
 static const char gameBarExe[] = "GameBar.exe";
+//Removing NVIDIA OVERLAY as it always takes over when nothing is on fullscreen
+static const char nvOverlay[] = "Nvidia Overlay.exe";
 
 BOOL TestFullscreen(HWND hwnd) {
 	WINDOWPLACEMENT wp;
@@ -79,7 +81,12 @@ __declspec(dllexport) int get_running_fullscreen_game_path(char* buffer, int buf
 			if (result == 0) {
 				continue;
 			}
-
+			//Removing NVIDIA OVERLAY as it always takes over when nothing is on fullscreen
+			result = strcmp(charPath + strlen(charPath) - 11, nvOverlay);
+			if (result == 0) {
+				continue;
+			}
+			
 			result = strcmp(charPath + strlen(charPath) - 11, gameBarExe);
 			if (result == 0) {
 				continue;
