@@ -1,25 +1,44 @@
 obs = obslua
 
+current_game = "Click 'Detect Game' to check"
+
 function script_description()
 	return [[Saves replays to sub-folders using the current fullscreen video game executable name.
 	
 Author: redraskal]]
 end
 
+function detect_current_game(props, prop)
+	local game = get_running_game()
+	if game ~= nil then
+		current_game = game
+	else
+		current_game = "No game detected"
+	end
+	obs.obs_property_set_description(obs.obs_properties_get(props, "current_game_info"), "Current Game: " .. current_game)
+	return true
+end
+
+function script_properties()
+	local props = obs.obs_properties_create()
+	obs.obs_properties_add_button(props, "detect_game_button", "DEBUG: Detect Game", detect_current_game)
+	obs.obs_properties_add_text(props, "current_game_info", "Current Game: " .. current_game, obs.OBS_TEXT_INFO)
+	return props
+end
+
 function script_load()
 	ffi = require("ffi")
 	ffi.cdef[[
-		int get_running_fullscreen_game_path(char* buffer, int bufferSize)
+		int get_fullscreen_window_friendly_name(char* buffer, int buffer_len)
 	]]
-	detect_game = ffi.load(script_path() .. "detect_game.dll")
-	print(get_running_game_title())
+	detect_fullscreen = ffi.load(script_path() .. "detect_fullscreen.dll")
 	obs.obs_frontend_add_event_callback(obs_frontend_callback)
 end
 
 function obs_frontend_callback(event)
 	if event == obs.OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED then
 		local path = get_replay_buffer_output()
-		local folder = get_running_game_title()
+		local folder = get_running_game()
 		if path ~= nil and folder ~= nil then
 			print("Moving " .. path .. " to " .. folder)
 			move(path, folder)
@@ -38,27 +57,18 @@ function get_replay_buffer_output()
 	return path
 end
 
-function get_running_game_title()
-	local path = ffi.new("char[?]", 260)
-	local result = detect_game.get_running_fullscreen_game_path(path, 260)
+function get_running_game()
+	local name = ffi.new("char[?]", 260)
+	local result = detect_fullscreen.get_fullscreen_window_friendly_name(name, 260)
 	if result ~= 0 then
 		return nil
 	end
-	result = ffi.string(path)
+	result = ffi.string(name)
 	local len = #result
 	if len == 0 then
 		return nil
 	end
-	local max = len - 4
-	local i = max
-	while i > 1 do
-		local char = result:sub(i, i)
-		if char == "\\" then
-			break
-		end
-		i = i - 1
-	end
-	return result:sub(i + 1, max)
+	return result
 end
 
 function move(path, folder)
